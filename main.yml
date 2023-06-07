@@ -1,0 +1,53 @@
+name: Repository Rules
+
+on:
+  push:
+    branches:
+      - '*'
+  pull_request:
+    branches:
+      - '*'
+
+jobs:
+  prevent_delete_master:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Check Branch
+      run: |
+        if [ "${{ github.ref_type }}" == "branch" ] && [ "${{ github.ref }}" == "refs/heads/master" ]; then
+          echo "Error: Deleting the master branch is not allowed."
+          exit 1
+        fi
+
+  prevent_force_push:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Check Force Push
+      run: |
+        if [ "${{ github.event_name }}" == "push" ] && [ "${{ github.ref_type }}" == "branch" ] && [ "${{ github.event.before }}" != "0000000000000000000000000000000000000000" ] && [ "${{ github.event.head_commit.id }}" != "${{ github.event.before }}" ]; then
+          echo "Error: Force pushing to branches is not allowed."
+          exit 1
+        fi
+        
+  check_branch_name:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Check Branch Name
+      run: |
+        branch_name=${{ github.ref }}
+        gitflow_regex='(feature|bugfix|hotfix|release)\/[a-z0-9]+(-[a-z0-9]+)*$'
+
+        if [[ ! $branch_name =~ $gitflow_regex ]]; then
+          echo "Error: The branch name '$branch_name' does not follow the Gitflow naming convention."
+          exit 1
+        fi
+
+        kebab_case_regex='^[a-z0-9]+(-[a-z0-9]+)*$'
+
+        if [[ ! $branch_name =~ $kebab_case_regex ]]; then
+          echo "Error: The branch name '$branch_name' is not in kebab-case format."
+          exit 1
+        fi
