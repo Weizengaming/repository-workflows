@@ -9,6 +9,24 @@ on:
       - '*'
 
 jobs:
+  prevent_direct_push:
+      runs-on: ubuntu-latest
+
+      steps:
+        - name: Checkout Repository
+          uses: actions/checkout@v2
+
+        - name: Create Pull Request
+          run: |
+            git branch -m master
+            git checkout -b temporary-branch
+            git push origin temporary-branch
+            gh pr create --base=master --head=temporary-branch --title="Pull Request: Changes from Direct Push" --body="This pull request was created to prevent direct pushes to the master branch."
+
+        - name: Prevent Direct Push
+          run: |
+            echo "Direct pushes to the master branch are not allowed. Please create a pull request instead."
+            exit 1
   prevent_delete_master:
     runs-on: ubuntu-latest
 
